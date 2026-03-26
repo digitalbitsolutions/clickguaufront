@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "project_number": "435081281173",
+    "project_id": "clickguau",
+    "storage_bucket": "clickguau.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435081281173:android:14761fcc2250e7769ee59c",
+        "android_client_info": {
+          "package_name": "app.clickguau.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "435081281173-25q847hoi70tuj2hiotpaqmtfs0a5sad.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.clickguau.com",
+            "certificate_hash": "ff882c0da5b77b7a432480fc872e36517844c7a6"
+          }
+        },
+        {
+          "client_id": "435081281173-4ka780no7gubhnm3nqov1d3mirj6fdba.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.clickguau.com",
+            "certificate_hash": "6c252c43fb9d5d8b370f0bc213a3f26b230fe13e"
+          }
+        },
+        {
+          "client_id": "435081281173-79l2n3rugjn5rapg18t7mphimnanuser.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.clickguau.com",
+            "certificate_hash": "b36467b783d8659a3b0f5f3604c4a8ea7f979a33"
+          }
+        },
+        {
+          "client_id": "435081281173-8c8c9bu23bbi9aqqmuhtgvabj3usprdm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.clickguau.com",
+            "certificate_hash": "f029470ad41264caad2cc8fb47a539a0596cdc73"
+          }
+        },
+        {
+          "client_id": "435081281173-krqj5a3jen354f99jm72eftbj29rpvse.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.clickguau.com",
+            "certificate_hash": "d416210ecdf763f1e2c6098c73a07bfbf52f433e"
+          }
+        },
+        {
+          "client_id": "435081281173-bldjlg904tjethf59uc87b5eu67ie0bq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-Ch3u8ra2QXtxDQtbDO_s2RbAp4Yjm4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "435081281173-bldjlg904tjethf59uc87b5eu67ie0bq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "435081281173-ssj0av4v2940tvlc6cg86eem8qrjlujt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.clickguau.com"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435081281173:android:361283ba656b30de9ee59c",
+        "android_client_info": {
+          "package_name": "com.clickguau.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "435081281173-bldjlg904tjethf59uc87b5eu67ie0bq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-Ch3u8ra2QXtxDQtbDO_s2RbAp4Yjm4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "435081281173-bldjlg904tjethf59uc87b5eu67ie0bq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "435081281173-ssj0av4v2940tvlc6cg86eem8qrjlujt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.clickguau.com"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

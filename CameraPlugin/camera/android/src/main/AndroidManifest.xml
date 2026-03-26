@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.retrytech.bubbly_camera">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <!--    <uses-feature android:name="android.hardware.camera2.full" />-->
+
+    <!--    <uses-feature android:name="android.hardware.camera.flash" />-->
+
+    <permission
+        android:name="android.permission.CAPTURE_AUDIO_OUTPUT"
+        android:protectionLevel="signature|privileged" />
+
+    <!--    <uses-feature android:name="android.hardware.camera.autofocus" />-->
+    <application android:requestLegacyExternalStorage="true">
+
+    </application>
+
+</manifest>

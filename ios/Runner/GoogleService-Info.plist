@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>435081281173-4q6fkom2728momfolkd7qnhbka2eload.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.435081281173-4q6fkom2728momfolkd7qnhbka2eload</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>435081281173-25q847hoi70tuj2hiotpaqmtfs0a5sad.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBoHMSaHqjosUB0nZ1sxMkJeH0FHkr_DBw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>435081281173</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>app.clickgua.com</string>
+	<key>PROJECT_ID</key>
+	<string>clickguau</string>
+	<key>STORAGE_BUCKET</key>
+	<string>clickguau.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:435081281173:ios:7281d2a0f58c8d609ee59c</string>
+</dict>
+</plist>
