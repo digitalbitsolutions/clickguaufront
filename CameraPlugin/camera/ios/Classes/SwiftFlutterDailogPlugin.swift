@@ -155,11 +155,7 @@ extension AVMutableComposition {
 }
 
 public class SwiftFlutterDailogPlugin: NSObject, FlutterPlugin {
-    
-    
-    // In App Purchase
-    static var products = [SKProduct]()
-    
+
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "bubbly_camera", binaryMessenger: registrar.messenger())
     let instance = SwiftFlutterDailogPlugin()
@@ -220,44 +216,6 @@ if(call.method == "path"){
 //        }
 //    }
     }
-        if (call.method == "in_app_purchase_id") {
-            print(call.arguments)
-            
-            
-            if let productId = call.arguments as? String {
-                print("In Product id")
-                PKIAPHandler.shared.setProductIds(ids: [productId])
-                PKIAPHandler.shared.fetchAvailableProducts {(products)   in
-                    print("Product fetched")
-                print(products)
-                self.products = products.sorted(by: { Int($0.price) < Int($1.price) })
-                
-                for obj in products {
-                    if obj.productIdentifier == productId {
-                        PKIAPHandler.shared.purchase(product: obj) { (alert, product, transaction) in
-                            if let tran = transaction, let prod = product {
-                                //use transaction details and purchased product as you want
-                                if tran.error == nil {
-                                    print("Purchase successfully ", productId)
-                                    channel.invokeMethod("is_success_purchase", arguments: true)
-                                } else {
-                                    print("In App Purchase error")
-                                    channel.invokeMethod("is_success_purchase", arguments: false)
-                                }
-                            } else {
-                                print("In App Purchase error")
-                                channel.invokeMethod("is_success_purchase", arguments: false)
-                            }
-                        }
-                        break
-                    }
-                }
-                
-            }
-        } else {
-            print("Something went wrong to product id arguments")
-        }
-        }
     }
     
   }
@@ -280,7 +238,6 @@ if(call.method == "path"){
 
 import Flutter
 import UIKit
-import StoreKit
 
 class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
     private var messenger: FlutterBinaryMessenger

@@ -205,12 +205,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     bool isValidation = isValid();
     if (isValidation) {
       CommonUI.showLoader(context);
-      await auth
-          .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: confirmPasswordController.text.trim(),
-      )
-          .then((value) async {
+      try {
+        final value = await auth.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: confirmPasswordController.text.trim(),
+        );
         await value.user?.sendEmailVerification();
         HashMap<String, String?> params = new HashMap();
         params[UrlRes.deviceToken] =
@@ -224,14 +223,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
         params[UrlRes.identity] = value.user?.email ?? value.user?.uid;
         params[UrlRes.platform] = Platform.isAndroid ? "1" : "2";
 
-        await ApiService().registerUser(params).then((value) async {
+        final user = await ApiService().registerUser(params);
+        CommonUI.hideLoader();
+        if (!mounted) return;
+        if (user.status == 200) {
           Navigator.pop(context);
-          Navigator.pop(context);
-        });
-      }).onError((FirebaseAuthException e, s) {
+        } else {
+          CommonUI.showToast(
+            msg: user.message?.isNotEmpty == true
+                ? user.message.toString()
+                : LKey.somethingWentWrong.tr,
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        CommonUI.hideLoader();
         CommonUI.showToast(msg: e.message.toString());
-        Navigator.pop(context);
-      });
+      } catch (e) {
+        CommonUI.hideLoader();
+        CommonUI.showToast(
+          msg: e.toString().isNotEmpty
+              ? e.toString()
+              : LKey.somethingWentWrong.tr,
+        );
+      }
     }
     setState(() {});
   }

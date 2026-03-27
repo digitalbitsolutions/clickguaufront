@@ -218,6 +218,7 @@ class UrlRes {
   /// privacy & term
   static final String termAndCondition = ConstRes.base + 'termsOfUse';
   static final String privacyPolicy = ConstRes.base + 'privacypolicy';
+  static final String accountDeletionHelp = ConstRes.base + 'account-deletion';
 
   static final String agoraLiveStreamingCheck =
       'https://api.agora.io/dev/v1/channel/user/';

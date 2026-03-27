@@ -31,6 +31,15 @@ import 'package:firebase_auth/firebase_auth.dart' as FireBaseAuth1;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
+class ApiException implements Exception {
+  final String message;
+
+  const ApiException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   var client = http.Client();
 
@@ -40,14 +49,54 @@ class ApiService {
       body: params,
       headers: {UrlRes.uniqueKey: ConstRes.apiKey},
     );
-    final responseJson = jsonDecode(response.body);
+    final responseJson = _decodeResponseMap(
+      response,
+      requestName: 'Registration',
+    );
+    final user = User.fromJson(responseJson);
     SessionManager sessionManager = SessionManager();
     await sessionManager.initPref();
-    sessionManager.saveUser(
-      jsonEncode(User.fromJson(responseJson)),
+    if (user.status == 200 && user.data != null) {
+      sessionManager.saveUser(jsonEncode(user));
+    }
+    return user;
+  }
+
+  Map<String, dynamic> _decodeResponseMap(
+    http.Response response, {
+    required String requestName,
+  }) {
+    final responseBody = response.body.trim();
+    if (responseBody.isEmpty) {
+      throw const ApiException('The server returned an empty response.');
+    }
+
+    try {
+      final responseJson = jsonDecode(responseBody);
+      if (responseJson is Map<String, dynamic>) {
+        return responseJson;
+      }
+      if (responseJson is Map) {
+        return responseJson.map(
+          (key, value) => MapEntry(key.toString(), value),
+        );
+      }
+    } on FormatException {
+      final lowerBody = responseBody.toLowerCase();
+      if (lowerBody.startsWith('<!doctype html') ||
+          lowerBody.startsWith('<html')) {
+        throw ApiException(
+          '$requestName is temporarily unavailable (${response.statusCode}).',
+        );
+      }
+      throw ApiException(
+        'Unexpected response from $requestName (${response.statusCode}).',
+      );
+    }
+
+    throw ApiException(
+      'Unsupported response format from $requestName (${response.statusCode}).',
     );
-    // print(response.body);
-    return User.fromJson(responseJson);
   }
 
   Future<UserVideo> getUserVideos(

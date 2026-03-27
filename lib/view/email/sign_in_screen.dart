@@ -233,7 +233,6 @@ class _SignInScreenState extends State<SignInScreen> {
       return await _auth.signInWithEmailAndPassword(
           email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
       CommonUI.showToast(msg: e.message.toString());
       return null;
     }
@@ -251,10 +250,11 @@ class _SignInScreenState extends State<SignInScreen> {
       return CommonUI.showToast(msg: LKey.pleaseEnterPassword.tr);
     }
     CommonUI.showLoader(context);
-    signIn(
-            email: emailController.text.trim(),
-            password: passwordController.text.trim())
-        .then((value) async {
+    try {
+      final value = await signIn(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
       if (value == null) return;
       if (value.user?.email == emailController.text.trim()) {
         if (value.user?.emailVerified == true) {
@@ -272,29 +272,37 @@ class _SignInScreenState extends State<SignInScreen> {
           params[UrlRes.identity] = value.user?.email ?? value.user?.uid;
           params[UrlRes.platform] = Platform.isAndroid ? "1" : "2";
 
-          await ApiService().registerUser(params).then((value) async {
-            Navigator.pop(context);
-            if (value.status == 200) {
-              sessionManager.saveBoolean(KeyRes.login, true);
-              CommonUI.showToast(msg: value.message.toString());
-              myLoading.setSelectedItem(0);
-              myLoading.setUser(value);
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => MainScreen()),
-                  (Route<dynamic> route) => false);
-            } else {
-              CommonUI.showToast(msg: value.message.toString());
-            }
-          });
+          final user = await ApiService().registerUser(params);
+          if (user.status == 200) {
+            sessionManager.saveBoolean(KeyRes.login, true);
+            CommonUI.showToast(msg: user.message.toString());
+            myLoading.setSelectedItem(0);
+            myLoading.setUser(user);
+            Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => MainScreen()),
+                (Route<dynamic> route) => false);
+          } else {
+            CommonUI.showToast(
+              msg: user.message?.isNotEmpty == true
+                  ? user.message.toString()
+                  : LKey.somethingWentWrong.tr,
+            );
+          }
         } else {
-          Navigator.pop(context);
           CommonUI.showToast(msg: LKey.pleaseVerifiedYourEmail.tr);
         }
       } else {
         CommonUI.showToast(msg: LKey.emailNotFound.tr);
       }
-    });
+    } catch (e) {
+      CommonUI.showToast(
+        msg:
+            e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,
+      );
+    } finally {
+      CommonUI.hideLoader();
+    }
   }
 
   void unFocusField() {

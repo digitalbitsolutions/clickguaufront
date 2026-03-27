@@ -23,6 +23,12 @@ class CommonUI {
   static void showLoader(BuildContext context) {
     Get.dialog(LoaderDialog());
   }
+
+  static void hideLoader() {
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
+  }
 }
 
 class LoaderDialog extends StatelessWidget {

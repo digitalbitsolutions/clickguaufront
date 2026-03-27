@@ -1,6 +1,5 @@
 package com.retrytech.bubbly_camera
 
-import MyPlayStoreBilling
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -10,7 +9,6 @@ import android.util.Log
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.android.billingclient.api.BillingClient
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -21,8 +19,6 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 
 /** FlutterDailogPlugin */
 class BubblyCameraPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware {
-    private var productId: String? = null
-
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
@@ -96,28 +92,9 @@ class BubblyCameraPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     }
 
-    var myPlayStoreBillingClient: MyPlayStoreBilling? = null
-
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         Log.e("TAG", "onMethodCall: " + call.method)
-        if (call.method.equals("in_app_purchase_id")) {
-            myPlayStoreBillingClient =
-                MyPlayStoreBilling(context, object : MyPlayStoreBilling.OnPurchaseComplete {
-                    override fun onConnected(isConnect: Boolean) {
-                        productId = call.arguments as String?
-                        myPlayStoreBillingClient?.startPurchase(
-                            productId,
-                            BillingClient.ProductType.INAPP,
-                            true
-                        )
-                    }
-
-                    override fun onPurchaseResult(isPurchaseSuccess: Boolean) {
-                        channel.invokeMethod("is_success_purchase", isPurchaseSuccess)
-                        myPlayStoreBillingClient?.onDestroy()
-                    }
-                })
-        } else if (call.method.equals("shareToInstagram")) {
+        if (call.method.equals("shareToInstagram")) {
             val text = call.arguments as String?
             if (text != null) {
                 shareTextToInstagram(text)
@@ -142,4 +119,3 @@ class BubblyCameraPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
 }
-

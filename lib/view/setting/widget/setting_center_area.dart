@@ -230,6 +230,18 @@ class _SettingCenterAreaState extends State<SettingCenterArea> {
                             image: icRemoveAccount,
                             onTap: () => onDeleteAccount(myLoading),
                           ),
+                          ItemSetting(
+                            text: 'How to delete your account',
+                            image: icHelp,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WebViewScreen(4),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),

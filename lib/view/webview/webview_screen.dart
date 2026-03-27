@@ -57,6 +57,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
       title = LKey.termsOfUse.tr;
     } else if (widget.type == 3) {
       title = LKey.privacyPolicy.tr;
+    } else if (widget.type == 4) {
+      title = LKey.deleteAccount.tr;
     }
     return title;
   }
@@ -67,6 +69,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
       title = UrlRes.termAndCondition;
     } else if (widget.type == 3) {
       title = UrlRes.privacyPolicy;
+    } else if (widget.type == 4) {
+      title = UrlRes.accountDeletionHelp;
     }
     return title;
   }

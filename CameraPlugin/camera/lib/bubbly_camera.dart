@@ -42,10 +42,6 @@ class BubblyCamera {
     await _channel.invokeMethod('shareToInstagram', text);
   }
 
-  static inAppPurchase(String productID) async {
-    await _channel.invokeMethod('in_app_purchase_id', productID);
-  }
-
   static saveImage(String path) async {
     await _channel.invokeMethod('path', path);
   }

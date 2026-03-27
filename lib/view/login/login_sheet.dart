@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:developer';
 import 'dart:io';
@@ -17,6 +18,7 @@ import 'package:bubbly/utils/url_res.dart';
 import 'package:bubbly/view/email/sign_in_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
@@ -76,7 +78,7 @@ class LoginSheet extends StatelessWidget {
                             CommonUI.showLoader(context);
                             _signInWithApple().then(
                               (value) {
-                                Navigator.pop(context);
+                                CommonUI.hideLoader();
                                 if (value != null) {
                                   _callApiForLogin(
                                       value, KeyRes.apple, context, myLoading);
@@ -104,18 +106,7 @@ class LoginSheet extends StatelessWidget {
                         name: LKey.singInWithEmail.tr),
                     SocialButton(
                         onTap: () {
-                          CommonUI.showLoader(context);
-                          _signInWithGoogle().then((value) {
-                            Navigator.pop(context);
-
-                            if (value != null) {
-                              print('null');
-                              _callApiForLogin(
-                                  value, KeyRes.google, context, myLoading);
-                            } else {
-                              print('null');
-                            }
-                          });
+                          _handleGoogleSignIn(context, myLoading);
                         },
                         isGoogleIcon: true,
                         isDarkMode: myLoading.isDark,
@@ -135,23 +126,89 @@ class LoginSheet extends StatelessWidget {
   }
 
   Future<User?> _signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    final GoogleSignInAuthentication? googleAuth =
-        await googleUser?.authentication;
-    if (googleAuth?.accessToken == null || googleAuth?.idToken == null) {
-      return null;
-    }
-    final googleCredential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
-    UserCredential? authResult;
     try {
-      authResult = await _auth.signInWithCredential(googleCredential);
+      final GoogleSignInAccount? googleUser =
+          await GoogleSignIn().signIn().timeout(
+                const Duration(seconds: 30),
+              );
+      if (googleUser == null) {
+        return null;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication.timeout(
+        const Duration(seconds: 30),
+      );
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw Exception('Google Sign-In did not return valid tokens.');
+      }
+
+      final googleCredential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final authResult = await _auth.signInWithCredential(googleCredential)
+          .timeout(const Duration(seconds: 30));
+      return authResult.user;
+    } on PlatformException catch (e) {
+      throw Exception(_googleSignInErrorMessage(e));
     } on FirebaseAuthException catch (e) {
-      print('LOG ============ ${e.message}');
+      throw Exception(
+        e.message?.isNotEmpty == true
+            ? e.message!
+            : 'Google Sign-In failed.',
+      );
+    } on TimeoutException {
+      throw Exception(
+        'Google Sign-In timed out. Please try again.',
+      );
     }
-    return authResult?.user;
+  }
+
+  Future<void> _handleGoogleSignIn(
+      BuildContext context, MyLoading myLoading) async {
+    CommonUI.showLoader(context);
+    try {
+      final value = await _signInWithGoogle();
+      if (value == null) {
+        CommonUI.showToast(msg: 'Google Sign-In was cancelled.');
+        return;
+      }
+
+      CommonUI.hideLoader();
+      await _callApiForLoginInternal(value, KeyRes.google, context, myLoading);
+    } catch (e) {
+      CommonUI.showToast(
+        msg:
+            e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,
+      );
+    } finally {
+      CommonUI.hideLoader();
+    }
+  }
+
+  String _googleSignInErrorMessage(PlatformException error) {
+    final lowerMessage = (error.message ?? '').toLowerCase();
+    final lowerCode = error.code.toLowerCase();
+
+    if (lowerCode.contains('sign_in_failed') ||
+        lowerMessage.contains('apiexception: 10') ||
+        lowerMessage.contains('12500')) {
+      return 'Google Sign-In is not configured for this Android build.';
+    }
+    if (lowerCode.contains('network_error') || lowerMessage.contains('network')) {
+      return 'Google Sign-In failed because of a network error.';
+    }
+    if (lowerCode.contains('sign_in_canceled') ||
+        lowerCode.contains('canceled') ||
+        lowerCode.contains('cancelled')) {
+      return 'Google Sign-In was cancelled.';
+    }
+
+    return error.message?.isNotEmpty == true
+        ? error.message!
+        : 'Google Sign-In failed.';
   }
 
   Future<User?> _signInWithApple() async {
@@ -184,6 +241,11 @@ class LoginSheet extends StatelessWidget {
 
   void _callApiForLogin(
       User value, String loginType, BuildContext context, MyLoading myLoading) {
+    _callApiForLoginInternal(value, loginType, context, myLoading);
+  }
+
+  Future<void> _callApiForLoginInternal(User value, String loginType,
+      BuildContext context, MyLoading myLoading) async {
     HashMap<String, String?> params = new HashMap();
     params[UrlRes.deviceToken] = sessionManager.getString(KeyRes.deviceToken);
     params[UrlRes.userEmail] = value.email ??
@@ -197,17 +259,28 @@ class LoginSheet extends StatelessWidget {
     params[UrlRes.identity] = value.email ?? value.uid;
     params[UrlRes.platform] = Platform.isAndroid ? "1" : "2";
     CommonUI.showLoader(context);
-    ApiService().registerUser(params).then(
-      (value) {
+    try {
+      final user = await ApiService().registerUser(params);
+      if (user.status == 200) {
+        sessionManager.saveBoolean(KeyRes.login, true);
+        myLoading.setSelectedItem(0);
+        myLoading.setUser(user);
         Navigator.pop(context);
-        if (value.status == 200) {
-          sessionManager.saveBoolean(KeyRes.login, true);
-          myLoading.setSelectedItem(0);
-          myLoading.setUser(value);
-          Navigator.pop(context);
-        }
-      },
-    );
+      } else {
+        CommonUI.showToast(
+          msg: user.message?.isNotEmpty == true
+              ? user.message.toString()
+              : LKey.somethingWentWrong.tr,
+        );
+      }
+    } catch (e) {
+      CommonUI.showToast(
+        msg:
+            e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,
+      );
+    } finally {
+      CommonUI.hideLoader();
+    }
   }
 
   Future<void> initData() async {
