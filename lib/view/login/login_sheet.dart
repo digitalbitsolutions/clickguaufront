@@ -75,19 +75,7 @@ class LoginSheet extends StatelessWidget {
                       visible: Platform.isIOS,
                       child: SocialButton(
                           onTap: () {
-                            CommonUI.showLoader(context);
-                            _signInWithApple().then(
-                              (value) {
-                                CommonUI.hideLoader();
-                                if (value != null) {
-                                  _callApiForLogin(
-                                      value, KeyRes.apple, context, myLoading);
-                                } else {
-                                  CommonUI.showToast(
-                                      msg: LKey.somethingWentWrong.tr);
-                                }
-                              },
-                            );
+                            _handleAppleSignIn(context, myLoading);
                           },
                           image: icApple,
                           isDarkMode: myLoading.isDark,
@@ -148,22 +136,63 @@ class LoginSheet extends StatelessWidget {
         idToken: googleAuth.idToken,
       );
 
-      final authResult = await _auth.signInWithCredential(googleCredential)
+      final authResult = await _auth
+          .signInWithCredential(googleCredential)
           .timeout(const Duration(seconds: 30));
       return authResult.user;
     } on PlatformException catch (e) {
       throw Exception(_googleSignInErrorMessage(e));
     } on FirebaseAuthException catch (e) {
       throw Exception(
-        e.message?.isNotEmpty == true
-            ? e.message!
-            : 'Google Sign-In failed.',
+        e.message?.isNotEmpty == true ? e.message! : 'Google Sign-In failed.',
       );
     } on TimeoutException {
       throw Exception(
         'Google Sign-In timed out. Please try again.',
       );
     }
+  }
+
+  Future<void> _clearSocialSession({bool shouldSignOutGoogle = false}) async {
+    try {
+      await _auth.signOut();
+    } catch (_) {}
+    if (shouldSignOutGoogle) {
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    }
+  }
+
+  String _fallbackNameFromEmail(String? email) {
+    if (email != null && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return 'user';
+  }
+
+  String _resolveUserEmail(User value) {
+    final email = value.email?.trim();
+    if (email != null && email.isNotEmpty) {
+      return email;
+    }
+    return '${value.uid}@fb.com';
+  }
+
+  String _resolveFullName(User value) {
+    final displayName = value.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return _fallbackNameFromEmail(value.email);
+  }
+
+  String _resolveUserName(User value) {
+    final email = value.email?.trim();
+    if (email != null && email.isNotEmpty && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return value.uid;
   }
 
   Future<void> _handleGoogleSignIn(
@@ -177,8 +206,13 @@ class LoginSheet extends StatelessWidget {
       }
 
       CommonUI.hideLoader();
-      await _callApiForLoginInternal(value, KeyRes.google, context, myLoading);
+      final isSuccess = await _callApiForLoginInternal(
+          value, KeyRes.google, context, myLoading);
+      if (!isSuccess) {
+        await _clearSocialSession(shouldSignOutGoogle: true);
+      }
     } catch (e) {
+      await _clearSocialSession(shouldSignOutGoogle: true);
       CommonUI.showToast(
         msg:
             e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,
@@ -197,7 +231,8 @@ class LoginSheet extends StatelessWidget {
         lowerMessage.contains('12500')) {
       return 'Google Sign-In is not configured for this Android build.';
     }
-    if (lowerCode.contains('network_error') || lowerMessage.contains('network')) {
+    if (lowerCode.contains('network_error') ||
+        lowerMessage.contains('network')) {
       return 'Google Sign-In failed because of a network error.';
     }
     if (lowerCode.contains('sign_in_canceled') ||
@@ -209,6 +244,33 @@ class LoginSheet extends StatelessWidget {
     return error.message?.isNotEmpty == true
         ? error.message!
         : 'Google Sign-In failed.';
+  }
+
+  Future<void> _handleAppleSignIn(
+      BuildContext context, MyLoading myLoading) async {
+    CommonUI.showLoader(context);
+    try {
+      final value = await _signInWithApple();
+      CommonUI.hideLoader();
+      if (value == null) {
+        CommonUI.showToast(msg: LKey.somethingWentWrong.tr);
+        return;
+      }
+
+      final isSuccess = await _callApiForLoginInternal(
+          value, KeyRes.apple, context, myLoading);
+      if (!isSuccess) {
+        await _clearSocialSession();
+      }
+    } catch (e) {
+      await _clearSocialSession();
+      CommonUI.showToast(
+        msg:
+            e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,
+      );
+    } finally {
+      CommonUI.hideLoader();
+    }
   }
 
   Future<User?> _signInWithApple() async {
@@ -239,23 +301,14 @@ class LoginSheet extends StatelessWidget {
     return null;
   }
 
-  void _callApiForLogin(
-      User value, String loginType, BuildContext context, MyLoading myLoading) {
-    _callApiForLoginInternal(value, loginType, context, myLoading);
-  }
-
-  Future<void> _callApiForLoginInternal(User value, String loginType,
+  Future<bool> _callApiForLoginInternal(User value, String loginType,
       BuildContext context, MyLoading myLoading) async {
     HashMap<String, String?> params = new HashMap();
     params[UrlRes.deviceToken] = sessionManager.getString(KeyRes.deviceToken);
-    params[UrlRes.userEmail] = value.email ??
-        value.displayName!
-                .split('@')[value.displayName!.split('@').length - 1] +
-            '@fb.com';
-    params[UrlRes.fullName] = value.displayName;
+    params[UrlRes.userEmail] = _resolveUserEmail(value);
+    params[UrlRes.fullName] = _resolveFullName(value);
     params[UrlRes.loginType] = loginType;
-    params[UrlRes.userName] =
-        value.email != null ? value.email!.split('@')[0] : value.uid;
+    params[UrlRes.userName] = _resolveUserName(value);
     params[UrlRes.identity] = value.email ?? value.uid;
     params[UrlRes.platform] = Platform.isAndroid ? "1" : "2";
     CommonUI.showLoader(context);
@@ -266,6 +319,7 @@ class LoginSheet extends StatelessWidget {
         myLoading.setSelectedItem(0);
         myLoading.setUser(user);
         Navigator.pop(context);
+        return true;
       } else {
         CommonUI.showToast(
           msg: user.message?.isNotEmpty == true
@@ -281,6 +335,7 @@ class LoginSheet extends StatelessWidget {
     } finally {
       CommonUI.hideLoader();
     }
+    return false;
   }
 
   Future<void> initData() async {

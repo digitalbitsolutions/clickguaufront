@@ -25,6 +25,7 @@ import 'package:bubbly/modal/user/user.dart';
 import 'package:bubbly/modal/user_video/user_video.dart';
 import 'package:bubbly/modal/wallet/my_wallet.dart';
 import 'package:bubbly/utils/const_res.dart';
+import 'package:bubbly/utils/key_res.dart';
 import 'package:bubbly/utils/session_manager.dart';
 import 'package:bubbly/utils/url_res.dart';
 import 'package:firebase_auth/firebase_auth.dart' as FireBaseAuth1;
@@ -44,11 +45,28 @@ class ApiService {
   var client = http.Client();
 
   Future<User> registerUser(HashMap<String, String?> params) async {
-    final response = await client.post(
-      Uri.parse(UrlRes.registerUser),
-      body: params,
-      headers: {UrlRes.uniqueKey: ConstRes.apiKey},
-    );
+    final requestBody = <String, String>{};
+    params.forEach((key, value) {
+      if (value != null && value.trim().isNotEmpty) {
+        requestBody[key] = value;
+      }
+    });
+    http.Response response;
+    try {
+      response = await client.post(
+        Uri.parse(UrlRes.registerUser),
+        body: requestBody,
+        headers: {
+          UrlRes.uniqueKey: ConstRes.apiKey,
+          HttpHeaders.acceptHeader: 'application/json',
+        },
+      ).timeout(const Duration(seconds: 30));
+    } on TimeoutException {
+      throw const ApiException('Registration timed out. Please try again.');
+    } on SocketException {
+      throw const ApiException(
+          'Unable to reach the server. Please check your connection.');
+    }
     final responseJson = _decodeResponseMap(
       response,
       requestName: 'Registration',
@@ -58,8 +76,30 @@ class ApiService {
     await sessionManager.initPref();
     if (user.status == 200 && user.data != null) {
       sessionManager.saveUser(jsonEncode(user));
+      await syncCurrentDeviceToken();
     }
     return user;
+  }
+
+  Future<void> syncCurrentDeviceToken() async {
+    final sessionManager = SessionManager();
+    await sessionManager.initPref();
+
+    final deviceToken = sessionManager.getString(KeyRes.deviceToken)?.trim();
+    final accessToken = SessionManager.accessToken.isNotEmpty
+        ? SessionManager.accessToken
+        : sessionManager.getUser()?.data?.token ?? '';
+
+    if (deviceToken == null || deviceToken.isEmpty || accessToken.isEmpty) {
+      return;
+    }
+
+    SessionManager.accessToken = accessToken;
+    try {
+      await setNotificationSettings(deviceToken);
+    } catch (_) {
+      // Best-effort sync only.
+    }
   }
 
   Map<String, dynamic> _decodeResponseMap(

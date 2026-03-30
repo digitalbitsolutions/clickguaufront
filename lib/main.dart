@@ -33,7 +33,8 @@ Future<void> main() async {
   await FlutterDownloader.initialize(ignoreSsl: true);
   await sessionManager.initPref();
   await _initAppTrackingTransparency();
-  selectedLanguage = sessionManager.giveString(KeyRes.languageCode) ?? byDefaultLanguage;
+  selectedLanguage =
+      sessionManager.giveString(KeyRes.languageCode) ?? byDefaultLanguage;
   runApp(MyApp());
 }
 
@@ -51,7 +52,9 @@ class _MyAppState extends State<MyApp> {
         builder: (context, MyLoading myLoading, child) {
           // print('Mode : ${myLoading.isDark}');
           SystemChrome.setSystemUIOverlayStyle(
-            myLoading.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+            myLoading.isDark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark,
           );
           return GetMaterialApp(
             debugShowCheckedModeBanner: false,
@@ -75,7 +78,8 @@ class _MyAppState extends State<MyApp> {
 
 // Platform messages are asynchronous, so we initialize in an async method.
 Future<void> _initAppTrackingTransparency() async {
-  final TrackingStatus status = await AppTrackingTransparency.trackingAuthorizationStatus;
+  final TrackingStatus status =
+      await AppTrackingTransparency.trackingAuthorizationStatus;
   // If the system can show an authorization request dialog
   if (status == TrackingStatus.notDetermined) {
     // Request system's tracking authorization dialog
@@ -92,7 +96,8 @@ class MyBubblyApp extends StatefulWidget {
 class _MyBubblyAppState extends State<MyBubblyApp> {
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
   SessionManager _sessionManager = SessionManager();
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -110,7 +115,9 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
             Center(
               child: Image(
                 width: 225,
-                image: AssetImage(myLoading.isDark ? icLogoHorizontal : icLogoHorizontalLight),
+                image: AssetImage(myLoading.isDark
+                    ? icLogoHorizontal
+                    : icLogoHorizontalLight),
               ),
             ),
             Align(
@@ -133,9 +140,15 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
   }
 
   void _saveTokenUpdate() async {
-    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestPermission();
 
-    flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions();
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions();
 
     await firebaseMessaging.requestPermission(
       alert: true,
@@ -156,11 +169,14 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
         importance: Importance.max);
 
     FirebaseMessaging.onMessage.listen((message) {
-      var initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
+      var initializationSettingsAndroid =
+          const AndroidInitializationSettings('@mipmap/ic_launcher');
 
       var initializationSettingsIOS = const DarwinInitializationSettings();
 
-      var initializationSettings = InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+      var initializationSettings = InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS);
 
       flutterLocalNotificationsPlugin.initialize(initializationSettings);
       RemoteNotification? notification = message.notification;
@@ -172,7 +188,8 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
         notification?.title,
         notification?.body,
         NotificationDetails(
-          iOS: const DarwinNotificationDetails(presentSound: true, presentAlert: true, presentBadge: true),
+          iOS: const DarwinNotificationDetails(
+              presentSound: true, presentAlert: true, presentBadge: true),
           android: AndroidNotificationDetails(
             channel.id,
             channel.name,
@@ -182,7 +199,10 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
       );
     });
 
-    await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
   void _getUserData() async {
@@ -192,23 +212,33 @@ class _MyBubblyAppState extends State<MyBubblyApp> {
 
     _sessionManager.saveString(KeyRes.deviceToken, token);
 
-    if (_sessionManager.getUser() != null && _sessionManager.getUser()!.data != null) {
+    if (_sessionManager.getUser() != null &&
+        _sessionManager.getUser()!.data != null) {
       SessionManager.userId = _sessionManager.getUser()!.data!.userId ?? -1;
       SessionManager.accessToken = _sessionManager.getUser()?.data?.token ?? '';
+      await ApiService().syncCurrentDeviceToken();
     }
     await ApiService().fetchSettingsData();
 
-    Provider.of<MyLoading>(context, listen: false).setUser(_sessionManager.getUser());
-    !ConstRes.isDialog ? SizedBox() : Provider.of<MyLoading>(context, listen: false).setIsHomeDialogOpen(true);
+    Provider.of<MyLoading>(context, listen: false)
+        .setUser(_sessionManager.getUser());
+    !ConstRes.isDialog
+        ? SizedBox()
+        : Provider.of<MyLoading>(context, listen: false)
+            .setIsHomeDialogOpen(true);
     Provider.of<MyLoading>(context, listen: false).setSelectedItem(0);
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => MainScreen()), (route) => false);
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => MainScreen()),
+        (route) => false);
   }
 }
 
 // Overscroll color remove
 class MyBehavior extends ScrollBehavior {
   @override
-  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
     return child;
   }
 }

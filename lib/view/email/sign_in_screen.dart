@@ -238,6 +238,27 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  Future<void> _clearFirebaseSession() async {
+    try {
+      await _auth.signOut();
+    } catch (_) {}
+  }
+
+  String _fallbackNameFromEmail(String? email) {
+    if (email != null && email.contains('@')) {
+      return email.split('@').first;
+    }
+    return 'user';
+  }
+
+  String _resolveFullName(User? user) {
+    final displayName = user?.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return _fallbackNameFromEmail(user?.email);
+  }
+
   void onLoginBtnClick(MyLoading myLoading) async {
     unFocusField();
     if (emailController.text.trim().isEmpty) {
@@ -250,12 +271,14 @@ class _SignInScreenState extends State<SignInScreen> {
       return CommonUI.showToast(msg: LKey.pleaseEnterPassword.tr);
     }
     CommonUI.showLoader(context);
+    bool hasFirebaseSession = false;
     try {
       final value = await signIn(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
       if (value == null) return;
+      hasFirebaseSession = true;
       if (value.user?.email == emailController.text.trim()) {
         if (value.user?.emailVerified == true) {
           sessionManager.saveString(
@@ -264,7 +287,7 @@ class _SignInScreenState extends State<SignInScreen> {
           params[UrlRes.deviceToken] =
               sessionManager.getString(KeyRes.deviceToken);
           params[UrlRes.userEmail] = value.user?.email;
-          params[UrlRes.fullName] = 'as';
+          params[UrlRes.fullName] = _resolveFullName(value.user);
           params[UrlRes.loginType] = KeyRes.email;
           params[UrlRes.userName] = value.user?.email != null
               ? value.user?.email!.split('@')[0]
@@ -282,7 +305,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 context,
                 MaterialPageRoute(builder: (context) => MainScreen()),
                 (Route<dynamic> route) => false);
+            hasFirebaseSession = false;
           } else {
+            await _clearFirebaseSession();
             CommonUI.showToast(
               msg: user.message?.isNotEmpty == true
                   ? user.message.toString()
@@ -290,12 +315,17 @@ class _SignInScreenState extends State<SignInScreen> {
             );
           }
         } else {
+          await _clearFirebaseSession();
           CommonUI.showToast(msg: LKey.pleaseVerifiedYourEmail.tr);
         }
       } else {
+        await _clearFirebaseSession();
         CommonUI.showToast(msg: LKey.emailNotFound.tr);
       }
     } catch (e) {
+      if (hasFirebaseSession) {
+        await _clearFirebaseSession();
+      }
       CommonUI.showToast(
         msg:
             e.toString().isNotEmpty ? e.toString() : LKey.somethingWentWrong.tr,

@@ -37,7 +37,14 @@ class SessionManager {
   }
 
   void saveString(String key, String? value) async {
-    if (sharedPreferences != null) sharedPreferences!.setString(key, value!);
+    if (sharedPreferences == null) {
+      return;
+    }
+    if (value == null) {
+      sharedPreferences!.remove(key);
+      return;
+    }
+    sharedPreferences!.setString(key, value);
   }
 
   String? getString(String key) {

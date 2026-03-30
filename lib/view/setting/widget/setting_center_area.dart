@@ -308,6 +308,17 @@ class _SettingCenterAreaState extends State<SettingCenterArea> {
     );
   }
 
+  Future<void> _signOutIdentityProvider(String? loginType) async {
+    try {
+      await auth.FirebaseAuth.instance.signOut();
+    } catch (_) {}
+    if (loginType == KeyRes.google) {
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    }
+  }
+
   void shareLink() async {
     User user = Provider.of<MyLoading>(context, listen: false).getUser!;
     BranchUniversalObject buo = BranchUniversalObject(
@@ -350,13 +361,9 @@ class _SettingCenterAreaState extends State<SettingCenterArea> {
             title2: LKey.doYoReallyNWantToLogOut.tr,
             positiveText: LKey.confirm.tr,
             onPositiveTap: () async {
-              if (myLoading.getUser?.data?.loginType == "0") {
-                logOutUser(context);
-              } else {
-                GoogleSignIn().signOut().then((value) {
-                  logOutUser(context);
-                });
-              }
+              await _signOutIdentityProvider(
+                  myLoading.getUser?.data?.loginType);
+              logOutUser(context);
             },
           );
         });

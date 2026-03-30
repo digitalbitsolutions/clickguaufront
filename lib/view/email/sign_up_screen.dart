@@ -1,7 +1,3 @@
-import 'dart:collection';
-import 'dart:io';
-
-import 'package:bubbly/api/api_service.dart';
 import 'package:bubbly/custom_view/common_ui.dart';
 import 'package:bubbly/custom_view/privacy_policy_view.dart';
 import 'package:bubbly/languages/languages_keys.dart';
@@ -9,10 +5,7 @@ import 'package:bubbly/utils/assert_image.dart';
 import 'package:bubbly/utils/colors.dart';
 import 'package:bubbly/utils/const_res.dart';
 import 'package:bubbly/utils/font_res.dart';
-import 'package:bubbly/utils/key_res.dart';
 import 'package:bubbly/utils/my_loading/my_loading.dart';
-import 'package:bubbly/utils/session_manager.dart';
-import 'package:bubbly/utils/url_res.dart';
 import 'package:bubbly/view/email/widget/login_text_filed.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -40,18 +33,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   FocusNode referralFocusNode = FocusNode();
 
   FirebaseAuth auth = FirebaseAuth.instance;
-  final SessionManager sessionManager = SessionManager();
-
   String fullNameError = '';
   String emailError = '';
   String passwordError = '';
   String confirmPasswordError = '';
-
-  @override
-  void initState() {
-    initSessionManager();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +173,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void initSessionManager() async {
-    await sessionManager.initPref();
-  }
-
   void unFocusField() {
     nameFocusNode.unfocus();
     emailFocusNode.unfocus();
@@ -210,35 +191,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
           email: emailController.text.trim(),
           password: confirmPasswordController.text.trim(),
         );
+        await value.user?.updateDisplayName(nameController.text.trim());
         await value.user?.sendEmailVerification();
-        HashMap<String, String?> params = new HashMap();
-        params[UrlRes.deviceToken] =
-            sessionManager.getString(KeyRes.deviceToken);
-        params[UrlRes.userEmail] = value.user?.email;
-        params[UrlRes.fullName] = nameController.text.trim();
-        params[UrlRes.loginType] = KeyRes.email;
-        params[UrlRes.userName] = value.user?.email != null
-            ? value.user?.email!.split('@')[0]
-            : value.user?.uid;
-        params[UrlRes.identity] = value.user?.email ?? value.user?.uid;
-        params[UrlRes.platform] = Platform.isAndroid ? "1" : "2";
-
-        final user = await ApiService().registerUser(params);
+        await auth.signOut();
         CommonUI.hideLoader();
         if (!mounted) return;
-        if (user.status == 200) {
-          Navigator.pop(context);
-        } else {
-          CommonUI.showToast(
-            msg: user.message?.isNotEmpty == true
-                ? user.message.toString()
-                : LKey.somethingWentWrong.tr,
-          );
-        }
+        CommonUI.showToast(
+          msg:
+              '${LKey.emailSentSuccessfully.tr}\n${LKey.pleaseVerifiedYourEmail.tr}',
+        );
+        Navigator.pop(context);
       } on FirebaseAuthException catch (e) {
+        await auth.signOut();
         CommonUI.hideLoader();
         CommonUI.showToast(msg: e.message.toString());
       } catch (e) {
+        await auth.signOut();
         CommonUI.hideLoader();
         CommonUI.showToast(
           msg: e.toString().isNotEmpty
