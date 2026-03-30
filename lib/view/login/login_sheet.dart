@@ -16,7 +16,9 @@ import 'package:bubbly/utils/my_loading/my_loading.dart';
 import 'package:bubbly/utils/session_manager.dart';
 import 'package:bubbly/utils/url_res.dart';
 import 'package:bubbly/view/email/sign_in_screen.dart';
+import 'package:bubbly/view/webview/webview_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -100,6 +102,27 @@ class LoginSheet extends StatelessWidget {
                         isDarkMode: myLoading.isDark,
                         image: icGoogle,
                         name: LKey.singInWithGoogle.tr),
+                    if (!kReleaseMode)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WebViewScreen(4),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Debug: open account deletion help',
+                            style: TextStyle(
+                              color: ColorRes.colorIcon,
+                              fontFamily: FontRes.fNSfUiSemiBold,
+                            ),
+                          ),
+                        ),
+                      ),
                     SizedBox(height: 15),
                     PrivacyPolicyView(),
                     SizedBox(height: AppBar().preferredSize.height / 2),
